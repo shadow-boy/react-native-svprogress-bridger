@@ -15,7 +15,14 @@ note: That command depends on command in Target 'YourApp': script phase "[CP] Co
 
 **Cause**: This happens because SVProgressHUD includes its own `PrivacyInfo.xcprivacy` file, which conflicts with React Native's privacy manifest aggregation system.
 
-**Solution**: Add the following code to your `ios/Podfile`:
+**Automatic Solution**: The library includes a postinstall script that automatically adds the fix to your existing `post_install` block. Simply install and run:
+
+```bash
+yarn add react-native-svprogress-bridger@https://github.com/shadow-boy/react-native-svprogress-bridger
+cd ios && pod install
+```
+
+**Manual Solution**: If the automatic fix doesn't work, add the following code to your **existing** `post_install` block in `ios/Podfile`:
 
 ```ruby
 post_install do |installer|
@@ -123,6 +130,31 @@ If you're still experiencing issues:
    - Steps to reproduce
    - Your Podfile (for iOS issues)
 
-## Automatic Fix
+## Important Notes
 
-Starting from version 0.2.0, the package includes a postinstall script that automatically applies the iOS privacy manifest fix. If you're still experiencing issues, the manual fix above should resolve them.
+### Podfile Integration
+- **Don't create a new `post_install` block** if you already have one
+- **Add the fix code inside your existing `post_install` block**
+- The automatic script detects existing `post_install` blocks and integrates the fix properly
+
+### Example Integration
+If your Podfile has:
+```ruby
+post_install do |installer|
+  react_native_post_install(installer, config[:reactNativePath])
+end
+```
+
+It becomes:
+```ruby
+post_install do |installer|
+  react_native_post_install(installer, config[:reactNativePath])
+  
+  # Fix SVProgressHUD privacy manifest conflict (added automatically)
+  privacy_file_path = File.join(installer.sandbox.root, 'SVProgressHUD', 'SVProgressHUD', 'PrivacyInfo.xcprivacy')
+  if File.exist?(privacy_file_path)
+    File.delete(privacy_file_path)
+    puts "Removed duplicate PrivacyInfo.xcprivacy from SVProgressHUD"
+  end
+end
+```

@@ -120,7 +120,21 @@ interface SVProgressConfig {
 
 ### iOS Implementation
 - **SVProgressHUD Dependency**: Uses the official SVProgressHUD CocoaPods library
-- **Privacy Manifest**: Includes automatic handling of privacy manifest conflicts
+- **Privacy Manifest**: Includes automatic handling of privacy manifest conflicts via postinstall script
+- **Manual Fix**: If the automatic fix doesn't work, manually add this to your existing `post_install` block in `ios/Podfile`:
+
+```ruby
+post_install do |installer|
+  # Your existing post_install code...
+  
+  # Fix SVProgressHUD privacy manifest conflict
+  privacy_file_path = File.join(installer.sandbox.root, 'SVProgressHUD', 'SVProgressHUD', 'PrivacyInfo.xcprivacy')
+  if File.exist?(privacy_file_path)
+    File.delete(privacy_file_path)
+    puts "Removed duplicate PrivacyInfo.xcprivacy from SVProgressHUD"
+  end
+end
+```
 
 ## Contributing
 

@@ -29,32 +29,30 @@ function updatePodfile(podfilePath) {
     let content = fs.readFileSync(podfilePath, 'utf8');
     
     // Check if our fix is already present
-    if (content.includes('SVProgressHUD', 'SVProgressHUD', 'PrivacyInfo.xcprivacy')) {
+    if (content.includes('SVProgressHUD') && content.includes('PrivacyInfo.xcprivacy')) {
       console.log('✅ SVProgressHUD privacy manifest fix already present in Podfile');
       return;
     }
 
-    // Find post_install block or create one
-    const postInstallRegex = /post_install\s+do\s+\|installer\|/;
-    const fixCode = `
-  # Fix SVProgressHUD privacy manifest conflict (added by react-native-svprogress-bridger)
-  privacy_file_path = File.join(installer.sandbox.root, 'SVProgressHUD', 'SVProgressHUD', 'PrivacyInfo.xcprivacy')
-  if File.exist?(privacy_file_path)
-    File.delete(privacy_file_path)
-    puts "Removed duplicate PrivacyInfo.xcprivacy from SVProgressHUD"
-  end`;
+    const fixCode = `    # Fix SVProgressHUD privacy manifest conflict (added by react-native-svprogress-bridger)
+    privacy_file_path = File.join(installer.sandbox.root, 'SVProgressHUD', 'SVProgressHUD', 'PrivacyInfo.xcprivacy')
+    if File.exist?(privacy_file_path)
+      File.delete(privacy_file_path)
+      puts "Removed duplicate PrivacyInfo.xcprivacy from SVProgressHUD"
+    end`;
 
-    if (postInstallRegex.test(content)) {
-      // Add to existing post_install block
-      content = content.replace(
-        /(\s+end\s*$)/m,
-        fixCode + '\n$1'
-      );
+    // Look for existing post_install block
+    const postInstallMatch = content.match(/(post_install\s+do\s+\|installer\|[\s\S]*?)(\n\s*end\s*$)/m);
+    
+    if (postInstallMatch) {
+      // Insert our fix code before the closing 'end' of the post_install block
+      const beforeEnd = postInstallMatch[1];
+      const endPart = postInstallMatch[2];
+      const newPostInstall = beforeEnd + '\n\n' + fixCode + endPart;
+      content = content.replace(postInstallMatch[0], newPostInstall);
     } else {
-      // Create new post_install block
-      const newPostInstall = `
-post_install do |installer|${fixCode}
-end`;
+      // No existing post_install block, create a new one
+      const newPostInstall = `\n  post_install do |installer|\n${fixCode}\n  end\n`;
       content += newPostInstall;
     }
 
