@@ -1,6 +1,7 @@
 {
   "name": "react-native-svprogress-bridger",
   "version": "0.1.0",
+  "private": true,
   "description": "A Native Module for react-native that uses SVProgressHUD on iOS and KProgressHUD on Android.",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
