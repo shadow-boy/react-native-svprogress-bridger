@@ -45,6 +45,9 @@ android.iml
 #
 example/ios/Pods
 
+# Privacy Manifests (avoid conflicts with dependencies)
+**/PrivacyInfo.xcprivacy
+
 # Ruby
 example/vendor/
 
